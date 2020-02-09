@@ -355,6 +355,25 @@ void serveJson(AsyncWebServerRequest* request)
 
 #define MAX_LIVE_LEDS 180
 
+
+void serveLiveLeds(char* response) {
+  byte used = strip.getUsableCount();
+  byte n = (used -1) /MAX_LIVE_LEDS +1; //only serve every n'th LED if count over MAX_LIVE_LEDS
+  strncpy(response, "{\"leds\":[", sizeof(response));
+  olen = 9;
+  obuf = response;
+
+  for (uint16_t i= 0; i < used; i += n)
+  {
+    olen += sprintf(response + olen, "\"%06X\",", strip.getPixelColor(i));
+  }
+  olen -= 1;
+  oappend("],\"n\":");
+  oappendi(n);
+  oappend("}");
+}
+
+
 void serveLiveLeds(AsyncWebServerRequest* request)
 {
   byte used = strip.getUsableCount();
