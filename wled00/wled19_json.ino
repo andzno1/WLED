@@ -363,7 +363,7 @@ void serveJson(AsyncWebServerRequest* request)
 
 
 void serveLiveLeds(char* response) {
-  byte used = strip.getUsableCount();
+  byte used = ledCount;
   byte n = (used -1) /MAX_LIVE_LEDS +1; //only serve every n'th LED if count over MAX_LIVE_LEDS
   strncpy(response, "{\"leds\":[", sizeof(response));
   olen = 9;
