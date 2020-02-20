@@ -70,7 +70,7 @@ void WS2812FX::service() {
         handle_palette();
         uint16_t delay = (this->*_mode[SEGMENT.mode])();
         SEGENV.next_time = nowUp + delay;
-        if (SEGMENT.mode != FX_MODE_HALLOWEEN_EYES) SEGENV.call++;
+        if (SEGMENT.mode != FX_MODE_HALLOWEEN_EYES && SEGMENT.mode != FX_MODE_CSGO_C4) SEGENV.call++;
       }
     }
   }

@@ -3162,3 +3162,58 @@ uint16_t WS2812FX::mode_heartbeat(void) {
 
   return FRAMETIME;
 }
+
+/**
+ * Blink between color `SEGCOLOR(0)` and `SEGCOLOR(1)`.
+ * Static light: `SEGCOLOR(2)`.
+ * 
+ * To make sure that this mode can be called again, the best way is to set the segment's
+ * mode to something else first (e.g. static with color `BLACK`)
+ * 
+ * `SEGMENT.speed`: Aafter how many seconds to show static light.
+ * `SEGMENT.intensity`: Aafter how many seconds of static light to turn off.
+ **/
+uint16_t WS2812FX::mode_csgo_c4(void) {
+  // `SEGENV.aux0`: Switch for blink color, after blinking switch for triggering off.
+  // `SEGENV.aux1`: Switch for static color.
+  if (SEGENV.call == 0) {
+    SEGENV.call = now;
+  }
+  int32_t timeDiff = now - SEGENV.call;
+  int32_t staticAfter = SEGMENT.speed * 1000;
+  int32_t turnOffAfter = staticAfter + SEGMENT.intensity * 1000;
+  
+  if (timeDiff < staticAfter) {
+    // Linear function calculated with some sample values (no magic numbers intended).
+    //  Original function would be f(t) = -0.0235 * timeDiff + 994.7949.
+    //  Using half the values, because we have to switch between two colors.
+    int32_t wait = -0.0117 * timeDiff + 497.3975;
+
+    // Prevent flashing too fast.
+    if (wait < 75) {
+      wait = 75;
+    }
+    
+    if (SEGENV.step == 0 || now - SEGENV.step > wait) {
+      if (SEGENV.aux0 == 0) {
+        SEGENV.aux0 = 1;
+        fill(SEGCOLOR(0));
+      } else {
+        SEGENV.aux0 = 0;
+        fill(SEGCOLOR(1));
+      }
+      SEGENV.step = now;
+    }
+  } else if (SEGENV.aux1 == 0) {
+    SEGENV.aux1 = 1;
+    SEGENV.aux0 = 0;
+    fill(SEGCOLOR(2));
+  } else if (SEGENV.aux0 == 0 && timeDiff > turnOffAfter) {
+    SEGENV.aux0 = 1;
+    // fill(BLACK);
+    // Change segment mode to reset THIS mode and be able to call it again.
+    SEGMENT.mode = FX_MODE_STATIC;
+    SEGMENT.colors[0] = BLACK;
+  }
+  return FRAMETIME;
+}
