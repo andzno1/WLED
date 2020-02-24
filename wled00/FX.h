@@ -28,6 +28,7 @@
 #define WS2812FX_h
 
 #include "NpbWrapper.h"
+#include "const.h"
 
 #define FASTLED_INTERNAL //remove annoying pragma messages
 #include "FastLED.h"
@@ -54,6 +55,9 @@
 #else
 #define MAX_SEGMENT_DATA 8192
 #endif
+
+#define LED_SKIP_AMOUNT  1
+#define MIN_SHOW_DELAY  15
 
 #define NUM_COLORS       3 /* number of colors per segment */
 #define SEGMENT          _segments[_segment_index]
@@ -414,7 +418,8 @@ class WS2812FX {
       resetSegments(),
       setPixelColor(uint16_t n, uint32_t c),
       setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b, uint8_t w = 0),
-      show(void);
+      show(void),
+      setRgbwPwm(void);
 
     bool
       reverseMode = false,
@@ -426,6 +431,7 @@ class WS2812FX {
 
     uint8_t
       mainSegment = 0,
+      rgbwMode = RGBW_MODE_DUAL,
       paletteFade = 0,
       paletteBlend = 0,
       colorOrder = 0,
@@ -589,7 +595,7 @@ class WS2812FX {
     void fill(uint32_t);
 
     bool
-      _rgbwMode,
+      _useRgbw = false,
       _cronixieMode,
       _cronixieBacklightEnabled,
       _skipFirstMode,
@@ -624,6 +630,12 @@ class WS2812FX {
     
     uint32_t _lastPaletteChange = 0;
     uint32_t _lastShow = 0;
+    
+    #ifdef WLED_USE_ANALOG_LEDS
+    uint32_t _analogLastShow = 0;
+    uint32_t _analogLastColor = 0;
+    uint8_t _analogLastBri = 0;
+    #endif
     
     uint8_t _segment_index = 0;
     uint8_t _segment_index_palette_last = 99;

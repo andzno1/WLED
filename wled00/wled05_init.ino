@@ -43,7 +43,7 @@ void wledInit()
   loadSettingsFromEEPROM(true);
   beginStrip();
   userSetup();
-  if (strcmp(clientSSID,"Your_Network") == 0) showWelcomePage = true;
+  if (strcmp(clientSSID,DEFAULT_CLIENT_SSID) == 0) showWelcomePage = true;
   WiFi.persistent(false);
 
   if (macroBoot>0) applyMacro(macroBoot);
@@ -83,7 +83,9 @@ void wledInit()
       if (strlen(cmDNS) > 0) ArduinoOTA.setHostname(cmDNS);
     }
   #endif
-  
+  #ifdef WLED_ENABLE_DMX
+    dmx.init(512); // initialize with bus length
+  #endif
   //HTTP server page init
   initServer();
 }
@@ -99,7 +101,7 @@ void beginStrip()
 #endif
 
   if (bootPreset>0) applyPreset(bootPreset, turnOnAtBoot, true, true);
-  colorUpdated(0);
+  colorUpdated(NOTIFIER_CALL_MODE_INIT);
 
   //init relay pin
   #if RLYPIN >= 0
@@ -124,7 +126,7 @@ void initAP(bool resetAP=false){
   if (apBehavior == AP_BEHAVIOR_BUTTON_ONLY && !resetAP) return;
 
   if (!apSSID[0] || resetAP) strcpy(apSSID, "WLED-AP");
-  if (resetAP) strcpy(apPass,"wled1234");
+  if (resetAP) strcpy(apPass,DEFAULT_AP_PASS);
   DEBUG_PRINT("Opening access point ");
   DEBUG_PRINTLN(apSSID);
   WiFi.softAPConfig(IPAddress(4, 3, 2, 1), IPAddress(4, 3, 2, 1), IPAddress(255,255,255,0));
@@ -190,9 +192,14 @@ void initConnection()
   #ifdef ESP8266
    WiFi.hostname(serverDescription);
   #endif
+  
    WiFi.begin(clientSSID, clientPass);
+   
   #ifdef ARDUINO_ARCH_ESP32
+   WiFi.setSleep(!noWifiSleep);
    WiFi.setHostname(serverDescription);
+  #else
+   wifi_set_sleep_type((noWifiSleep) ? NONE_SLEEP_T : MODEM_SLEEP_T);
   #endif
 }
 
